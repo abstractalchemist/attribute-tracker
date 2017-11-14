@@ -80,7 +80,7 @@ function Card({pos,power,level,soul,updatestats}) {
 }
 
 
-function AttributeUpdate({attribute,add,remove,end_of_opponents_turn,eoot_value,on_opponents_turn,oot_value}) {
+function AttributeUpdate({attribute,add,remove,end_of_opponents_turn,eoot_value,on_opponents_turn,oot_value,continous,c_value}) {
     return (<tr>
 	    <td>
 	    {attribute}
@@ -102,7 +102,10 @@ function AttributeUpdate({attribute,add,remove,end_of_opponents_turn,eoot_value,
 	    <td>
 	    <Checkbox id={`opponents-turn-${attribute}`} change={on_opponents_turn} checked={oot_value}>
 	    </Checkbox>
-
+	    </td>
+	    <td>
+	    <Checkbox id={`continous-${attribute}`} change={continous} checked={c_value}>
+	    </Checkbox>
 	    </td>
 	    </tr>)
 }
@@ -123,42 +126,41 @@ class Main extends React.Component {
 		       player_center_left:{power:0,level:0,soul:0},
 		       player_center_middle:{power:0,level:0,soul:0},
 		       player_center_right:{power:0,level:0,soul:0},
-		       power : { end_of_opponents_turn: false, on_opponents_turn: false },
-		       soul : { end_of_opponents_turn: false, on_opponents_turn: false },
-		       level : { end_of_opponents_turn: false, on_opponents_turn: false },
+		       power : { end_of_opponents_turn: false, on_opponents_turn: false, continous: false, val:0 },
+		       soul : { end_of_opponents_turn: false, on_opponents_turn: false, continous: false, val:0 },
+		       level : { end_of_opponents_turn: false, on_opponents_turn: false, continous: false, val:0 },
+		       
 		       turn:0 }
     }
 
-    endOfOpponentTurn(attribute) {
-	return evt => {
-	    let obj = this.state
-	    obj[attribute]['end_of_opponents_turn'] = evt.currentTarget.checked
-	    this.setState(obj)
-	}
-    }
+    
 
-    onOpponentTurn(attribute) {
+    checkedOn(attribute, field) {
 	return evt => {
 	    let obj = this.state;
-	    obj[attribute]['on_opponents_turn'] = evt.currentTarget.checked
+	    obj[attribute][field] = evt.currentTarget.checked
 	    this.setState(obj)
 	}
     }
 			
 
     
-    addstats(attribute) {
+    applystats(attribute, operation) {
 	return evt => {
 	    console.log(`updating ${this.state.cardpos}`)
 	    let obj = this.state
 	    console.log(`pos ${typeof this.state.cardpos}`)
 	    let end_of_opponents_turn = obj[attribute]['end_of_opponents_turn']
 	    let on_opponents_turn = obj[attribute]['on_opponents_turn']
+	    let continous = obj[attribute]['continous']
 	    let calculator = func => {
-		return _ => {
+		return addit => {
+		    let val = func
 		    if(typeof func === 'function')
-			func = func()
-		    return func + this[attribute]
+			val = func()
+		    if(addit)
+			return operation(val, this[attribute])
+		    return val
 		}
 	    }
 	    
@@ -171,19 +173,16 @@ class Main extends React.Component {
 			let eventurn = turn % 2 === 0
 			let oddturn = turn % 2 === 1
  			return _ => {
-			    console.log(`calculating for ${turn} , on_opponents_turn ${on_opponents_turn}, end_of_opponents_turn ${end_of_opponents_turn}`)
-			    if(turn === this.state.turn && !on_opponents_turn) {
-				return calc()
-			    }
-			    else if(end_of_opponents_turn && turn + 1 === this.state.turn) {
-				return calc()
-			    }
-			    else if(on_opponents_turn &&
- 				    ((eventurn && (this.state.turn % 2 === 1)) ||
-				     oddturn && (this.state.turn % 2 === 0)))
-				return calc()
+			    let end_of_turn = (turn === this.state.turn && !on_opponents_turn)
+			    let end_of_opponents_next_turn = (end_of_opponents_turn &&  turn + 1 === this.state.turn)
+			    let only_opponents_turn = on_opponents_turn &&
+ 				((eventurn && (this.state.turn % 2 === 1)) ||
+				 oddturn && (this.state.turn % 2 === 0))
+			    console.log(`calculating for ${end_of_turn} , on_opponents_turn ${end_of_opponents_next_turn}, end_of_opponents_turn ${only_opponents_turn}, continous ${continous}`)
+			    if(end_of_turn || end_of_opponents_next_turn || only_opponents_turn || continous)
+				return calc(true)
 			    
-			    return 0
+			    return calc()
 			}
 		    })()
 		    
@@ -196,18 +195,16 @@ class Main extends React.Component {
 		    let eventurn = turn % 2 === 0
 		    let oddturn = turn % 2 === 1
  		    return _ => {
-			console.log(`calculating for ${turn} , on_opponents_turn ${on_opponents_turn}, end_of_opponents_turn ${end_of_opponents_turn}`)
-			if(turn === this.state.turn && !on_opponents_turn) {
-			    return calc()
-			}
-			else if(end_of_opponents_turn &&  turn + 1 === this.state.turn) {
-			    return calc()
-			}
-			else if(on_opponents_turn &&
- 				((eventurn && (this.state.turn % 2 === 1)) ||
-				 oddturn && (this.state.turn % 2 === 0)))
-			    return calc()
-			return 0;
+			let end_of_turn = (turn === this.state.turn && !on_opponents_turn)
+			let end_of_opponents_next_turn = (end_of_opponents_turn &&  turn + 1 === this.state.turn)
+			let only_opponents_turn = on_opponents_turn &&
+ 			    ((eventurn && (this.state.turn % 2 === 1)) ||
+			     oddturn && (this.state.turn % 2 === 0))
+			console.log(`calculating for ${turn} , on_opponents_turn ${on_opponents_turn}, end_of_opponents_turn ${end_of_opponents_turn}, continous ${continous}`)
+			if(end_of_turn || end_of_opponents_next_turn || only_opponents_turn || continous)
+			    return calc(true)
+			
+			return calc()
 			
 		    }
 		})()
@@ -217,25 +214,6 @@ class Main extends React.Component {
 	}
     }
 
-
-    removestats(attribute) {
-	return evt => {
-	    console.log(`updating ${this.state.cardpos}`)
-	    let obj = this.state
-	    
- 	    if(Array.isArray(this.state.cardpos)) {
-		this.state.cardpos.forEach(i => {
-		    obj[i][attribute] -= this[attribute]
-		})
-		
-	    }
-	    else {
-		obj[this.state.cardpos][attribute] -= this[attribute]
-	    }
-	    this.setState(obj)	    
-	    
-	}	
-    }
 
     updatestats(cardpos) {
 	return evt => {
@@ -364,26 +342,33 @@ class Main extends React.Component {
 		<th>Decrease</th>
 		<th>End Of Opponent's Turn</th>
 		<th>On Opponent's Turn</th>
+		<th>Continous</th>
 		</tr>
 		</thead>
 		<tbody>
-		<AttributeUpdate attribute="Power" add={this.addstats('power')} remove={this.removestats('power')}
-		end_of_opponents_turn={this.endOfOpponentTurn('power')}
+		<AttributeUpdate attribute="Power" add={this.applystats('power', (a,b) => a + b)} remove={this.applystats('power', (a,b) => a - b)}
+		end_of_opponents_turn={this.checkedOn('power','this.state.power.end_of_opponents_turn')}
 		eoot_value={this.state.power.end_of_opponents_turn}
-		on_opponents_turn={this.onOpponentTurn('power')}
-		oot_value={this.state.power.on_opponents_turn}/>
+		on_opponents_turn={this.checkedOn('power','on_opponents_turn')}
+		oot_value={this.state.power.on_opponents_turn}
+		continous={this.checkedOn('power','continous')}
+		c_value={this.state.power.continous}/>
 		
-		<AttributeUpdate attribute="Soul" add={this.addstats('soul')} remove={this.removestats('soul')}
-		end_of_opponents_turn={this.endOfOpponentTurn('soul')}
+		<AttributeUpdate attribute="Soul" add={this.applystats('soul', (a,b) => a + b)} remove={this.applystats('soul', (a,b) => a - b)}
+		end_of_opponents_turn={this.checkedOn('soul','end_of_opponents_turn')}
 		eoot_value={this.state.soul.end_of_opponents_turn}
-		on_opponents_turn={this.onOpponentTurn('soul')}
-		oot_value={this.state.soul.on_opponents_turn}/>
+		on_opponents_turn={this.checkedOn('soul','on_opponents_turn')}
+		oot_value={this.state.soul.on_opponents_turn}
+		continous={this.checkedOn('soul','continous')}
+		c_value={this.state.soul.continous}/>
 		
-		<AttributeUpdate attribute="Level" add={this.addstats('level')} remove={this.removestats('level')}
-		end_of_opponents_turn={this.endOfOpponentTurn('level')}
-		eoot_value={this.state.soul.end_of_opponents_turn}
-		on_opponents_turn={this.onOpponentTurn('soul')}
-		oot_value={this.state.soul.on_opponents_turn}/>
+		<AttributeUpdate attribute="Level" add={this.applystats('level', (a,b) => a + b)} remove={this.applystats('level', (a,b) => a - b)}
+		end_of_opponents_turn={this.checkedOn('level','end_of_opponents_turn')}
+		eoot_value={this.state.level.end_of_opponents_turn}
+		on_opponents_turn={this.checkedOn('level','on_opponents_turn')}
+		oot_value={this.state.level.on_opponents_turn}
+		continous={this.checkedOn('level','continous')}
+		c_value={this.state.level.continous}/>
 		
 		</tbody>
 		</table>
@@ -392,9 +377,9 @@ class Main extends React.Component {
 		<button className="mdl-button mdl-js-button mdl-button--raised" onClick={
 		    _ => {
 			document.querySelector('#updater-dialog').close()
-			this.setState({ power : { end_of_opponents_turn: false, on_opponents_turn: false },
-					soul : { end_of_opponents_turn: false, on_opponents_turn: false },
-					level : { end_of_opponents_turn: false, on_opponents_turn: false } })
+			this.setState({ power : { end_of_opponents_turn: false, on_opponents_turn: false, continous:false, val:0 },
+					soul : { end_of_opponents_turn: false, on_opponents_turn: false, continous:false, val:0  },
+					level : { end_of_opponents_turn: false, on_opponents_turn: false, continous:false, val:0 } })
 
 			document.querySelectorAll('table label').forEach(i => {
 			    i.classList.remove('is-checked')
