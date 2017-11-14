@@ -17,5 +17,16 @@
     align-self:center;
 }
 
-@media screen and (min-width:1500px) {
+.card .mdl-card__supporting-text .mdl-checkbox {
+    width:initial;
+}
+
+@media screen and (max-width:1024px) {
+.card .mdl-card__supporting-text {
+    text-align:center;
+    width:100%;
+    overflow:auto;
+    align-self:center;
+}
+    
 }    
