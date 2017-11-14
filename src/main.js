@@ -274,10 +274,12 @@ class Main extends React.Component {
 		obj[this.state.cardpos][attribute] = 0
 	    }
 	    this.setState(obj)
+	    
 	}
 	resetIt('power')
 	resetIt('soul')
 	resetIt('level')
+	document.querySelector('#updater-dialog').close()
     }
     
     render() {
@@ -401,7 +403,7 @@ class Main extends React.Component {
 		}>
 		OK
 		</button>
-		<button className="mdl-button mdl=js-button mdl-button--raised" onClick={this.resetPos}>
+		<button className="mdl-button mdl=js-button mdl-button--raised" onClick={this.resetPos.bind(this)}>
 		Discard
 		</button>
 		</div>
