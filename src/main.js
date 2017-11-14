@@ -79,33 +79,102 @@ function Card({pos,power,level,soul,updatestats}) {
 	    </div>)
 }
 
+function Menu({id,opts,contextmenu,display}) {
+    let button = (<button id={id} className="mdl-button mdl-js-button">
+		  {display}
+		  </button>)
+    if(contextmenu) {
+	button = <button id={id} style={{position:"absolute",display:"none"}} />
+    }
+    return (<div >
+	    {button}
 
-function AttributeUpdate({attribute,add,remove,end_of_opponents_turn,eoot_value,on_opponents_turn,oot_value,continous,c_value}) {
+	    <ul className="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect"
+	    htmlFor={id}>
+	    {( _ => {
+		if(opts) {
+		    return opts.map( ({option,click}, index) => {
+			return (<li key={`menu-${id}-${index}`} data-value={option} className="mdl-menu__item" onClick={click}>{option}</li>)
+		    })
+		}
+	    })()}
+	    </ul>
+	    </div>)
+}
+
+function AttributeUpdate({attribute,add,remove,end_of_opponents_turn,eoot_value,on_opponents_turn,oot_value,continous,c_value,addopts,removeopts}) {
     return (<tr>
 	    <td>
 	    {attribute}
 	    </td>
 	    <td>
-	    <button className="mdl-button mdl-js-button mdl-button--icon" onClick={add}>
+	    <button className="mdl-button mdl-js-button mdl-button--icon" onClick={
+		evt => {
+		    if(add)
+			add()
+		}
+	    } onContextMenu={
+		e => {
+		    if(addopts) {
+			document.querySelector(`#${attribute}-menu`).dispatchEvent(new MouseEvent('click'))
+			e.preventDefault()
+		    }
+		}
+	    }>
 	    <i className="material-icons">add</i>
+
 	    </button>
+	    {( _ => {
+		if(addopts) {
+		    let menuopts = addopts.map( val => {
+			return {
+			    option:val,
+			    click: _ => {
+				add(val)
+			    }
+			}
+		    })
+		    return (<Menu id={`${attribute}-menu`} opts={menuopts} contextmenu={true}/>)
+
+		}
+	    })()}
 	    </td>
 	    <td>
-	    <button className="mdl-button mdl-js-button mdl-button--icon" onClick={remove}>
+	    <button className="mdl-button mdl-js-button mdl-button--icon" onClick={
+		evt => {
+		    if(remove)
+			remove()
+		}
+	    }>
 	    <i className="material-icons">remove</i>
 	    </button>
 	    </td>
 	    <td>
-	    <Checkbox id={`end-opponents-turn-${attribute}`} change={end_of_opponents_turn} checked={eoot_value}>
-	    </Checkbox>
-	    </td>
-	    <td>
-	    <Checkbox id={`opponents-turn-${attribute}`} change={on_opponents_turn} checked={oot_value}>
-	    </Checkbox>
-	    </td>
-	    <td>
-	    <Checkbox id={`continous-${attribute}`} change={continous} checked={c_value}>
-	    </Checkbox>
+	    <Menu id={`applied-effects-${attribute}`} display={
+		(_ => {
+		    if(eoot_value)
+			return "End Of Opponents Turn"
+		    if(oot_value)
+			return "On Opponents Turn"
+		    if(c_value)
+			return "Continous"
+		    return "None"
+		})()
+	    }
+	    opts={[
+		{
+		    option:"End Of Opponents Turn",
+		    click: _ => { end_of_opponents_turn({ currentTarget: { checked: !eoot_value }}) }
+		},
+		{
+		    option:"On Opponents Turn",
+		    click:_ => { on_opponents_turn({ currentTarget: { checked: !oot_value } }) }
+		},
+		{
+		    option:"Continous",
+		    click:_ => { continous({ currentTarget: { checked: !c_value } }) }
+		}
+	    ]} />
 	    </td>
 	    </tr>)
 }
@@ -258,6 +327,10 @@ class Main extends React.Component {
 	resetIt('power')
 	resetIt('soul')
 	resetIt('level')
+	this.setState({ power : { end_of_opponents_turn: false, on_opponents_turn: false, continous:false, val:0 },
+			soul : { end_of_opponents_turn: false, on_opponents_turn: false, continous:false, val:0  },
+			level : { end_of_opponents_turn: false, on_opponents_turn: false, continous:false, val:0 } })
+	
 	document.querySelector('#updater-dialog').close()
     }
     
@@ -341,49 +414,48 @@ class Main extends React.Component {
 		<th className="mdl-data-table__cell--non-numeric">Attribute</th>
 		<th>Increase</th>
 		<th>Decrease</th>
-		<th>End Of Opponent's Turn</th>
-		<th>On Opponent's Turn</th>
-		<th>Continous</th>
+		<th>Options</th>
 		</tr>
 		</thead>
 		<tbody>
 		<AttributeUpdate attribute="Power"
 		add={
-		    evt => {
+		    otherval => {
 			console.log(`updating ${this.state.power.val} to ${this.power}`)
 			let obj = this.state
-			obj.power.val += this.power
+			obj.power.val += (otherval ? otherval : this.power)
 			
 			this.setState(obj)
 		    }
 		}
 		remove={
-		    evt => {
+		    otherval => {
 			let obj = this.state
-			obj.power.val -= this.power
+			obj.power.val -= (otherval ? otherval : this.power)
 
 			this.setState(obj)
 		    }
 		}
-		end_of_opponents_turn={this.checkedOn('power','this.state.power.end_of_opponents_turn')}
+		end_of_opponents_turn={this.checkedOn('power','end_of_opponents_turn')}
 		eoot_value={this.state.power.end_of_opponents_turn}
 		on_opponents_turn={this.checkedOn('power','on_opponents_turn')}
 		oot_value={this.state.power.on_opponents_turn}
 		continous={this.checkedOn('power','continous')}
-		c_value={this.state.power.continous}/>
+		c_value={this.state.power.continous}
+		addopts={[2000,4000,6000,8000,10000]}/>
 		
 		<AttributeUpdate attribute="Soul"
 		add={
-		    evt => {
+		    otherval => {
 			let obj = this.state
-			obj.soul.val += this.soul
+			obj.soul.val += (otherval ? otherval : this.soul)
 			this.setState(obj)
 		    }
 		}
 		remove={
-		    evt => {
+		    otherval => {
 			let obj = this.state
-			obj.soul.val -= this.soul
+			obj.soul.val -= (otherval ? otherval : this.soul)
 			
 			this.setState(obj)
 		    }
@@ -397,16 +469,16 @@ class Main extends React.Component {
 		
 		<AttributeUpdate attribute="Level" 
 		add={
-		    evt => {
+		    otherval => {
   			let obj = this.state
-			obj.level.val += this.level
+			obj.level.val += (otherval ? otherval : this.level)
 			this.setState(obj)
 		    }
 		}
 		remove={
-		    evt => {
+		    otherval => {
 			let obj = this.state
-			obj.level.val -= this.level
+			obj.level.val -= (otherval ? otherval : this.level)
 
 			this.setState(obj)
 		    }
