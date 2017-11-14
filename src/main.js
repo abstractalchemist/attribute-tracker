@@ -420,6 +420,7 @@ class Main extends React.Component {
 		
 		</tbody>
 		</table>
+		<span>Power: {this.state.power.val} Level: {this.state.level.val} Soul: {this.state.soul.val}</span>
 		</div>
 		<div className="mdl-dialog__actions">
 		<button className="mdl-button mdl-js-button mdl-button--raised" onClick={
