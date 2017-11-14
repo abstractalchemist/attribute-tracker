@@ -1,0 +1,21 @@
+.card {
+}
+
+.card .mdl-card__title {
+    background:no-repeat center/contain url(http://www.lilakihabara.com/wp-content/uploads/2016/06/ws_cardback_600px.png);
+    min-height:100px;
+    
+}
+
+.card .mdl-card__actions {
+    text-align:center;
+}
+
+.card .mdl-card__supporting-text {
+    text-align:center;
+    width:50%;
+    align-self:center;
+}
+
+@media screen and (min-width:1500px) {
+}    

@@ -2,7 +2,7 @@ const gulp = require('gulp');
 const babelify = require('babelify');
 const browserify = require('browserify');
 const source = require('vinyl-source-stream');
-const connect = require('gulp-connect');
+//const connect = require('gulp-connect');
 const mocha = require('gulp-mocha');
 
 
@@ -22,12 +22,12 @@ gulp.task('js', ['test'], function() {
 	.pipe(gulp.dest('build'));
 })
 
-gulp.task('connect', ['js', 'cp'], function() {
-    return connect.server({ root : 'build', livereload : true });
-})
+// gulp.task('connect', ['js', 'cp'], function() {
+//     return connect.server({ root : 'build', livereload : true });
+// })
 
 gulp.task('cp', function() {
-    return gulp.src('public/index.html').pipe(gulp.dest('build'));
+    return gulp.src(['public/index.html','public/public.css']).pipe(gulp.dest('build'));
 })
 
 gulp.task('build', ['js','cp']);
