@@ -146,7 +146,8 @@ class Main extends React.Component {
 
     
     applystats(attribute, operation) {
-	return evt => {
+	let updateVal = this.state[attribute].val
+	return _ => {
 	    console.log(`updating ${this.state.cardpos}`)
 	    let obj = this.state
 	    console.log(`pos ${typeof this.state.cardpos}`)
@@ -159,7 +160,7 @@ class Main extends React.Component {
 		    if(typeof func === 'function')
 			val = func()
 		    if(addit)
-			return operation(val, this[attribute])
+			return operation(val, updateVal)
 		    return val
 		}
 	    }
@@ -178,7 +179,7 @@ class Main extends React.Component {
 			    let only_opponents_turn = on_opponents_turn &&
  				((eventurn && (this.state.turn % 2 === 1)) ||
 				 oddturn && (this.state.turn % 2 === 0))
-			    console.log(`calculating for ${end_of_turn} , on_opponents_turn ${end_of_opponents_next_turn}, end_of_opponents_turn ${only_opponents_turn}, continous ${continous}`)
+			    console.log(`calculating ${attribute} for ${end_of_turn} , on_opponents_turn ${end_of_opponents_next_turn}, end_of_opponents_turn ${only_opponents_turn}, continous ${continous}`)
 			    if(end_of_turn || end_of_opponents_next_turn || only_opponents_turn || continous)
 				return calc(true)
 			    
@@ -200,7 +201,7 @@ class Main extends React.Component {
 			let only_opponents_turn = on_opponents_turn &&
  			    ((eventurn && (this.state.turn % 2 === 1)) ||
 			     oddturn && (this.state.turn % 2 === 0))
-			console.log(`calculating for ${turn} , on_opponents_turn ${on_opponents_turn}, end_of_opponents_turn ${end_of_opponents_turn}, continous ${continous}`)
+			console.log(`calculating ${attribute} for ${turn} , on_opponents_turn ${on_opponents_turn}, end_of_opponents_turn ${end_of_opponents_turn}, continous ${continous}`)
 			if(end_of_turn || end_of_opponents_next_turn || only_opponents_turn || continous)
 			    return calc(true)
 			
@@ -346,7 +347,24 @@ class Main extends React.Component {
 		</tr>
 		</thead>
 		<tbody>
-		<AttributeUpdate attribute="Power" add={this.applystats('power', (a,b) => a + b)} remove={this.applystats('power', (a,b) => a - b)}
+		<AttributeUpdate attribute="Power"
+		add={
+		    evt => {
+			console.log(`updating ${this.state.power.val} to ${this.power}`)
+			let obj = this.state
+			obj.power.val += this.power
+			
+			this.setState(obj)
+		    }
+		}
+		remove={
+		    evt => {
+			let obj = this.state
+			obj.power.val -= this.power
+
+			this.setState(obj)
+		    }
+		}
 		end_of_opponents_turn={this.checkedOn('power','this.state.power.end_of_opponents_turn')}
 		eoot_value={this.state.power.end_of_opponents_turn}
 		on_opponents_turn={this.checkedOn('power','on_opponents_turn')}
@@ -354,7 +372,22 @@ class Main extends React.Component {
 		continous={this.checkedOn('power','continous')}
 		c_value={this.state.power.continous}/>
 		
-		<AttributeUpdate attribute="Soul" add={this.applystats('soul', (a,b) => a + b)} remove={this.applystats('soul', (a,b) => a - b)}
+		<AttributeUpdate attribute="Soul"
+		add={
+		    evt => {
+			let obj = this.state
+			obj.soul.val += this.soul
+			this.setState(obj)
+		    }
+		}
+		remove={
+		    evt => {
+			let obj = this.state
+			obj.soul.val -= this.soul
+			
+			this.setState(obj)
+		    }
+		}
 		end_of_opponents_turn={this.checkedOn('soul','end_of_opponents_turn')}
 		eoot_value={this.state.soul.end_of_opponents_turn}
 		on_opponents_turn={this.checkedOn('soul','on_opponents_turn')}
@@ -362,7 +395,22 @@ class Main extends React.Component {
 		continous={this.checkedOn('soul','continous')}
 		c_value={this.state.soul.continous}/>
 		
-		<AttributeUpdate attribute="Level" add={this.applystats('level', (a,b) => a + b)} remove={this.applystats('level', (a,b) => a - b)}
+		<AttributeUpdate attribute="Level" 
+		add={
+		    evt => {
+  			let obj = this.state
+			obj.level.val += this.level
+			this.setState(obj)
+		    }
+		}
+		remove={
+		    evt => {
+			let obj = this.state
+			obj.level.val -= this.level
+
+			this.setState(obj)
+		    }
+		}
 		end_of_opponents_turn={this.checkedOn('level','end_of_opponents_turn')}
 		eoot_value={this.state.level.end_of_opponents_turn}
 		on_opponents_turn={this.checkedOn('level','on_opponents_turn')}
@@ -377,10 +425,13 @@ class Main extends React.Component {
 		<button className="mdl-button mdl-js-button mdl-button--raised" onClick={
 		    _ => {
 			document.querySelector('#updater-dialog').close()
+			this.applystats('power', (a,b) => a + b)()
+			this.applystats('soul', (a,b) => a + b)()
+			this.applystats('level', (a,b) => a + b)()
 			this.setState({ power : { end_of_opponents_turn: false, on_opponents_turn: false, continous:false, val:0 },
 					soul : { end_of_opponents_turn: false, on_opponents_turn: false, continous:false, val:0  },
 					level : { end_of_opponents_turn: false, on_opponents_turn: false, continous:false, val:0 } })
-
+			
 			document.querySelectorAll('table label').forEach(i => {
 			    i.classList.remove('is-checked')
 			})
