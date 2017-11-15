@@ -1,106 +1,5 @@
 import React from 'react'
-
-function maplinks(links) {
-
-    if(links) {
-	return links.map( ({href,label}, i) => {
-	    return (<a className="mdl-navigation__link" href={href}>{label}</a>)
-	})
-    }
-
-
-}
-
-function Nav({title,links}) {
-    return (<header className="mdl-layout__header">
-	    <div className="mdl-layout__header-row">
-	    <span className="mdl-layout-title">{title}</span>
-	    <div className="mdl-layout-spacer"></div>
-	    <nav className="mdl-navigation">
-	    {maplinks(links)}
-	    </nav>
-	    </div>
-	    </header>)
-}
-
-function Drawer({title,links}) {
-    return (<div className="mdl-layout__drawer">
-	    <span className="mdl-layout-title">{title}</span>
-	    <nav className="mdl-navigation">
-	    {maplinks(links)}
-	    </nav>
-	    </div>)
-
-
-}
-
-
-function Checkbox({id,change,checked,children}) {
-    return (<label className="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" htmlFor={id}>
-	    <input type="checkbox" id={id} className="mdl-checkbox__input" value={( _ => checked ? 'on' : 'off')()} onChange={change}></input>
-	    <span className="mdl-checkbox__label">
-	    {children}
-	    </span>
-	    </label>)
-	
-}
-
-
-function Card({pos,power,level,soul,updatestats}) {
-    return (<div className="mdl-cell mdl-cell--2-col card">
-	    <div className="mdl-card" style={{width:'initial'}}>
-	    <div className="mdl-card__title" onClick={updatestats}>
-	    
-	    </div>
-	    <div className="mdl-card__supporting-text" >
-
-	    <Checkbox id={`pos-${pos}`}>
-	    {(_ => {
-		let souls = []
-		if(soul) {
-		    if(typeof soul === 'function')
-			soul = soul()
-		    for(let i = 0; i < soul; ++i) {
-			souls.push(<img key={`soul-${i}`} src="http://ws-tcg.com/en/cardlist/partimages/soul.gif"></img>)
-		    }
-		}
-		if(typeof power === 'function')
-		    power = power()
-		if(typeof level === 'function')
-		    level = level()
-		return [`${power || 0} / `].concat(souls).concat([` / ${level || 0}`]);
-
-	    })()}
-	    </Checkbox>
-	    </div>
-	    <div className="mdl-card__actions">
-	    </div>
-	    </div>
-	    </div>)
-}
-
-function Menu({id,opts,contextmenu,display}) {
-    let button = (<button id={id} className="mdl-button mdl-js-button">
-		  {display}
-		  </button>)
-    if(contextmenu) {
-	button = <button id={id} style={{position:"absolute",display:"none"}} />
-    }
-    return (<div >
-	    {button}
-
-	    <ul className="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect"
-	    htmlFor={id}>
-	    {( _ => {
-		if(opts) {
-		    return opts.map( ({option,click}, index) => {
-			return (<li key={`menu-${id}-${index}`} data-value={option} className="mdl-menu__item" onClick={click}>{option}</li>)
-		    })
-		}
-	    })()}
-	    </ul>
-	    </div>)
-}
+import { Menu, Card, Checkbox, Nav, Drawer, mergeHistories } from './utils'
 
 function AttributeUpdate({attribute,add,remove,end_of_opponents_turn,eoot_value,on_opponents_turn,oot_value,continous,c_value,addopts,removeopts}) {
     return (<tr>
@@ -179,22 +78,51 @@ function AttributeUpdate({attribute,add,remove,end_of_opponents_turn,eoot_value,
 	    </tr>)
 }
 
+function History({history}) {
+    return (<table className="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+	    <thead>
+	    <tr>
+	    <th>Turn</th>
+	    <th>Effect</th>
+	    <th>Attribute</th>
+	    <th>Value</th>
+	    </tr>
+	    </thead>
+	    <tbody>
+	    {(_ => {
+		if(history) {
+		    return history.map( ({val, onturn, attribute, desc}, i) => {
+			return (<tr key={`history-table-${i}`}>
+				<td>{onturn}</td>
+				<td>{desc}</td>
+				<td>{attribute}</td>
+				<td>{val}</td>
+				</tr>)
+		    })
+		}
+	    })()
+	    }
+	    </tbody>
+	    </table>)
+	    
+}
+
 class Main extends React.Component {
     constructor(props) {
 	super(props)
 	this.power = 500;
 	this.soul = 1;
 	this.level = 1;
-	this.state = { opponent_back_left:{power:0,level:0,soul:0},
-		       opponent_back_right:{power:0,level:0,soul:0},
-		       opponent_center_left:{power:0,level:0,soul:0},
-		       opponent_center_middle:{power:0,level:0,soul:0},
-		       opponent_center_right:{power:0,level:0,soul:0},
-		       player_back_left:{power:0,level:0,soul:0},
-		       player_back_right:{power:0,level:0,soul:0},
-		       player_center_left:{power:0,level:0,soul:0},
-		       player_center_middle:{power:0,level:0,soul:0},
-		       player_center_right:{power:0,level:0,soul:0},
+	this.state = { opponent_back_left:{power:0,level:0,soul:0,history:{}},
+		       opponent_back_right:{power:0,level:0,soul:0,history:{}},
+		       opponent_center_left:{power:0,level:0,soul:0,history:{}},
+		       opponent_center_middle:{power:0,level:0,soul:0,history:{}},
+		       opponent_center_right:{power:0,level:0,soul:0,history:{}},
+		       player_back_left:{power:0,level:0,soul:0,history:{}},
+		       player_back_right:{power:0,level:0,soul:0,history:{}},
+		       player_center_left:{power:0,level:0,soul:0,history:{}},
+		       player_center_middle:{power:0,level:0,soul:0,history:{}},
+		       player_center_right:{power:0,level:0,soul:0,history:{}},
 		       power : { end_of_opponents_turn: false, on_opponents_turn: false, continous: false, val:0 },
 		       soul : { end_of_opponents_turn: false, on_opponents_turn: false, continous: false, val:0 },
 		       level : { end_of_opponents_turn: false, on_opponents_turn: false, continous: false, val:0 },
@@ -211,19 +139,43 @@ class Main extends React.Component {
 	    this.setState(obj)
 	}
     }
-			
 
+    // 
+    
     
     applystats(attribute, operation) {
 	let updateVal = this.state[attribute].val
+
 	return _ => {
-	    console.log(`updating ${this.state.cardpos}`)
+//	    console.log(`updating ${this.state.cardpos}`)
 	    let obj = this.state
-	    console.log(`pos ${typeof this.state.cardpos}`)
+//	    console.log(`pos ${typeof this.state.cardpos}`)
 	    let end_of_opponents_turn = obj[attribute]['end_of_opponents_turn']
 	    let on_opponents_turn = obj[attribute]['on_opponents_turn']
 	    let continous = obj[attribute]['continous']
-	    let calculator = func => {
+	    let collected_history = []
+	    
+	    let pos = this.state.cardpos
+	    if(Array.isArray(pos)) {
+		pos.forEach( i => {
+		    if(obj[i]['history'][attribute]) {
+			obj[i]['history'][attribute].push(collected_history)
+		    }
+		    else {
+			obj[i]['history'][attribute] = [collected_history]
+		    }
+		})
+	    }
+	    else {
+		if(obj[pos]['history'][attribute]) {
+		    obj[pos]['history'][attribute].push(collected_history)
+		}
+		else {
+		    obj[pos]['history'][attribute] = [collected_history]
+		}
+	    }
+
+	    const calculator = func => {
 		return addit => {
 		    let val = func
 		    if(typeof func === 'function')
@@ -233,51 +185,67 @@ class Main extends React.Component {
 		    return val
 		}
 	    }
-	    
-	    if(Array.isArray(this.state.cardpos)) {
-		this.state.cardpos.forEach(i => {
-		    let calc = calculator(obj[i][attribute])
-
-		    obj[i][attribute] = (_ => {
-			let turn = this.state.turn
-			let eventurn = turn % 2 === 0
-			let oddturn = turn % 2 === 1
- 			return _ => {
-			    let end_of_turn = (turn === this.state.turn && !on_opponents_turn)
-			    let end_of_opponents_next_turn = (end_of_opponents_turn &&  turn + 1 === this.state.turn)
-			    let only_opponents_turn = on_opponents_turn &&
- 				((eventurn && (this.state.turn % 2 === 1)) ||
-				 oddturn && (this.state.turn % 2 === 0))
-			    console.log(`calculating ${attribute} for ${end_of_turn} , on_opponents_turn ${end_of_opponents_next_turn}, end_of_opponents_turn ${only_opponents_turn}, continous ${continous}`)
-			    if(end_of_turn || end_of_opponents_next_turn || only_opponents_turn || continous)
-				return calc(true)
-			    
-			    return calc()
+		
+	    const makeCalculatingFunction = (turn, on_opponents_turn, end_of_opponents_turn, continous, calc) => {
+		let eventurn = turn % 2 === 0
+		let oddturn = turn % 2 === 1
+ 		return clear => {
+		    if(clear) {
+			if(Array.isArray(pos)) {
+			    pos.forEach(i => {
+				obj[i]['history'][attribute].forEach(j => {
+				    while(j.length > 0) j.pop()
+				})
+			    })
 			}
-		    })()
+			else
+			    obj[pos]['history'][attribute].forEach(j => {
+				while(j.length > 0) j.pop()
+			    })
+
+			    
+		    }
+		    let end_of_turn = (turn === this.state.turn && !on_opponents_turn)
+		    let end_of_opponents_next_turn = (end_of_opponents_turn &&  turn + 1 === this.state.turn)
+		    let only_opponents_turn = on_opponents_turn &&
+ 			((eventurn && (this.state.turn % 2 === 1)) ||
+			 oddturn && (this.state.turn % 2 === 0))
+		    if(end_of_turn || end_of_opponents_next_turn || only_opponents_turn || continous) {
+			collected_history.push(
+			    {
+				val:updateVal,
+				onturn:turn,
+				attribute,
+				desc: (_ => {
+				    if(end_of_turn) 
+					return "end of turn"
+				    else if(end_of_opponents_next_turn)
+					return "end of opponent's next turn"
+				    else if(only_opponents_turn)
+					return "on opponents_turn"
+				    else if(continous)
+					return "continous"
+				    return ""
+				})()
+			    })
+			return calc(true)
+			
+		    }
 		    
+		    return calc()
+		}
+	    }
+	    
+ 	    if(Array.isArray(this.state.cardpos)) {
+		this.state.cardpos.forEach(i => {
+		    const calc = calculator(obj[i][attribute])
+		    obj[i][attribute] = makeCalculatingFunction(this.state.turn, on_opponents_turn, end_of_opponents_turn, continous, calc)
 		})
 	    }
 	    else {
-		let calc = calculator(obj[this.state.cardpos][attribute])
-		obj[this.state.cardpos][attribute] = (_ => {
-		    let turn = this.state.turn
-		    let eventurn = turn % 2 === 0
-		    let oddturn = turn % 2 === 1
- 		    return _ => {
-			let end_of_turn = (turn === this.state.turn && !on_opponents_turn)
-			let end_of_opponents_next_turn = (end_of_opponents_turn &&  turn + 1 === this.state.turn)
-			let only_opponents_turn = on_opponents_turn &&
- 			    ((eventurn && (this.state.turn % 2 === 1)) ||
-			     oddturn && (this.state.turn % 2 === 0))
-			console.log(`calculating ${attribute} for ${turn} , on_opponents_turn ${on_opponents_turn}, end_of_opponents_turn ${end_of_opponents_turn}, continous ${continous}`)
-			if(end_of_turn || end_of_opponents_next_turn || only_opponents_turn || continous)
-			    return calc(true)
-			
-			return calc()
-			
-		    }
-		})()
+		const calc = calculator(obj[this.state.cardpos][attribute])
+		
+		obj[this.state.cardpos][attribute] = makeCalculatingFunction(this.state.turn, on_opponents_turn, end_of_opponents_turn, continous, calc)
 	    }
 	    this.setState(obj)	    
 
@@ -367,7 +335,19 @@ class Main extends React.Component {
 		</button>
 		</div>
 		<div className="mdl-cell mdl-cell--4-col" />
-		<Card pos="1" {...this.state.opponent_back_left} updatestats={this.updatestats(['opponent_back_left'])} />
+		<Card pos="1" {...this.state.opponent_back_left} updatestats={this.updatestats(['opponent_back_left'])}
+		contextmenu={[
+		    {
+			option:"History",
+			click:evt => {
+			    if(this.state.opponent_back_left.history) {
+				this.setState({display_history:mergeHistories(this.state.opponent_back_left.history)})
+			
+			    }
+			    document.querySelector('#history-display').showModal();
+			}
+		    }
+		]}/>
 		<Card pos="2" {...this.state.opponent_back_right} updatestats={this.updatestats(['opponent_back_right'])}/>
 		<div className="mdl-cell mdl-cell--4-col" />
 		<div className="mdl-cell mdl-cell--3-col" />
@@ -514,6 +494,22 @@ class Main extends React.Component {
 		</button>
 		<button className="mdl-button mdl=js-button mdl-button--raised" onClick={this.resetPos.bind(this)}>
 		Discard
+		</button>
+		</div>
+		</dialog>
+
+		<dialog className="mdl-dialog" id="history-display" style={{width:'fit-content'}}>
+		<div className="mdl-dialog__content">
+		<History history={this.state.display_history}/>
+		</div>
+		<div className="mdl-dialog__actions">
+		<button className="mdl-button mdl-js-button mdl-button__raised"
+		onClick={
+		    evt => {
+			document.querySelector('#history-display').close()
+		    }
+		}>
+		OK
 		</button>
 		</div>
 		</dialog>
